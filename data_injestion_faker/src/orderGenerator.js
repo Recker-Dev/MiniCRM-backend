@@ -6,7 +6,7 @@ const GENERATION_INTERVAL_MS = 1500; // Generate a new order every 1.5 seconds
 const generateRandomOrder = async () => {
     try {
         // Step 1: Get a list of all customers
-        const response = await axios.get('http://localhost:3000/customers');
+        const response = await axios.post('http://localhost:3000/customers/get', {});
         const customers = response.data;
 
         if (!customers || customers.length === 0) {

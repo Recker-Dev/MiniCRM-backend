@@ -1,5 +1,6 @@
 // src/index.js
 const express = require("express");
+const cors = require("cors");
 const customerRoutes = require("./routes/customerRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 
@@ -10,6 +11,8 @@ const { runOrderConsumer, disconnectOrderConsumer } = require('./event/kafkaOrde
 
 const app = express();
 app.use(express.json());
+app.use(cors());
+
 
 // Routes
 app.use("/customers", customerRoutes);

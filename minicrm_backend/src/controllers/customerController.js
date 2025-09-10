@@ -1,6 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
 const { createCustomerEntryValidationService } = require("../valServices/customerService")
 const { sendMessage } = require("../event/kafkaProducer")
+const { buildPrismaFilter } = require("../helper/helper");
 const prisma = new PrismaClient();
 
 exports.createCustomer = async (req, res) => {
@@ -32,7 +33,20 @@ exports.createCustomer = async (req, res) => {
 
 exports.getCustomers = async (req, res) => {
     try {
-        const customers = await prisma.customer.findMany();
+        let customers;
+
+        if (!req.body || Object.keys(req.body).length === 0) {
+            // no filters => return all
+            customers = await prisma.customer.findMany();
+        } else {
+            // apply rule engine
+            const prismaFilter = buildPrismaFilter(req.body);
+            // console.log(prismaFilter);
+            customers = await prisma.customer.findMany({
+                where: prismaFilter,
+            });
+        }
+
         res.json(customers);
     } catch (err) {
         res.status(500).json({ error: err.message });

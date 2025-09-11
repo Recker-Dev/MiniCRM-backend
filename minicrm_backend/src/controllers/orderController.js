@@ -1,11 +1,11 @@
-const { PrismaClient } = require("@prisma/client");
-const { createOrderEntryValidation } = require("../valServices/orderService");
-const { sendMessage } = require("../event/kafkaProducer")
+import { PrismaClient } from "@prisma/client";
+import { createOrderEntryValidation } from "../valServices/orderService.js";
+import { sendMessage } from "../event/kafkaProducer.js";
 const prisma = new PrismaClient();
 
 
 
-exports.createOrder = async (req, res) => {
+export async function createOrder(req, res) {
   try {
 
     // Step 1: Validate customer data
@@ -34,11 +34,11 @@ exports.createOrder = async (req, res) => {
 }
 
 
-exports.getOrders = async (req, res) => {
+export async function getOrders(req, res) {
   try {
     const orders = await prisma.order.findMany();
     res.json(orders);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-};
+}

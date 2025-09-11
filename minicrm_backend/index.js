@@ -1,13 +1,15 @@
 // src/index.js
-const express = require("express");
-const cors = require("cors");
-const customerRoutes = require("./routes/customerRoutes");
-const orderRoutes = require("./routes/orderRoutes");
+import express from "express";
+import cors from "cors";
 
-const { createTopics } = require("./config/kafkaInit");
-const { connectProducer, disconnectProducer } = require("./event/kafkaProducer");
-const { runCustomerConsumer, disconnectCustomerConsumer } = require("./event/kafkaCustomerConsumer");
-const { runOrderConsumer, disconnectOrderConsumer } = require('./event/kafkaOrderConsumer');
+import customerRoutes from "./src/routes/customerRoutes.js";
+import orderRoutes from "./src/routes/orderRoutes.js";
+import communicationRoutes from './src/routes/communicationRoutes.js';
+import campaignRoutes from './src/routes/campaignRoutes.js';
+import deliveryRoutes from './src/routes/deliveryRoutes.js';
+
+import { createTopics } from "./src/config/kafkaInit.js";
+import { connectProducer, disconnectProducer } from "./src/event/kafkaProducer.js";
 
 const app = express();
 app.use(express.json());
@@ -17,6 +19,9 @@ app.use(cors());
 // Routes
 app.use("/customers", customerRoutes);
 app.use("/orders", orderRoutes);
+app.use("/communications", communicationRoutes);
+app.use("/campaigns", campaignRoutes);
+app.use("/receipts", deliveryRoutes);
 
 const PORT = 3000;
 
@@ -29,16 +34,9 @@ const startApp = async () => {
         // Await the producer connection.
         await connectProducer().catch(console.error);
 
-        // Await the customer consumer connection and group joining.
-        await runCustomerConsumer().catch(console.error);
-
-        // Await the order consumer connection and group joining.
-        await runOrderConsumer().catch(console.error);
-
         // Start the http server.
         app.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);
-            console.log("✅ ALL INITIALIZATIONS DONE. READY FOR OPERATIONS!")
         });
 
     } catch (error) {
@@ -54,8 +52,6 @@ startApp();
 const shutdown = async () => {
     console.log('\nShutting down...');
     await disconnectProducer();
-    await disconnectCustomerConsumer();
-    await disconnectOrderConsumer();
     process.exit(0);
 };
 

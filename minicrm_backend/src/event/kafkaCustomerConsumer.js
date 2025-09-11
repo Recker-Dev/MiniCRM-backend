@@ -1,5 +1,5 @@
-const { Kafka } = require("kafkajs");
-const { PrismaClient } = require("@prisma/client");
+import { Kafka } from 'kafkajs';
+import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 
@@ -62,7 +62,7 @@ const processBatch = async () => {
     }
 };
 
-const runCustomerConsumer = async () => {
+export const runCustomerConsumer = async () => {
     try {
         await consumer.connect();
         console.log('✅  Kafka customer consumer connected successfully.');
@@ -94,13 +94,9 @@ setInterval(processBatch, 15000); // Process every 15 seconds even if batch size
 
 
 // Gracefully handle consumer shutdown
-const disconnectCustomerConsumer = async () => {
+export const disconnectCustomerConsumer = async () => {
     await consumer.disconnect();
     console.log('Kafka customer consumer disconnected.');
 };
 
 
-module.exports = {
-    runCustomerConsumer,
-    disconnectCustomerConsumer
-}

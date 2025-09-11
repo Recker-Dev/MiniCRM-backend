@@ -30,26 +30,32 @@ function castValue(attribute, val) {
     return val;
 }
 
-function buildPrismaFilter(ruleGroup) {
+export function buildPrismaFilter(ruleGroup) {
     if (!ruleGroup || !ruleGroup.rules) return {};
 
     const combinatorKey = ruleGroup.combinator === 'AND' ? 'AND' : 'OR';
 
-    const conditions = ruleGroup.rules.map(rule => {
-        if (rule.rules) {
-            // nested group
-            return buildPrismaFilter(rule);
-        } else {
-            const prismaOperator = operatorMap[rule.operator];
-            return {
-                [rule.attribute]: {
-                    [prismaOperator]: castValue(rule.attribute, rule.value)
+    const conditions = ruleGroup.rules
+        .map(rule => {
+            if (rule.rules) {
+                // nested group
+                return buildPrismaFilter(rule);
+            } else {
+                const prismaOperator = operatorMap[rule.operator];
+                if (!rule.attribute || !prismaOperator) {
+                    // skip invalid/empty rules
+                    return null;
                 }
-            };
-        }
-    });
+                return {
+                    [rule.attribute]: {
+                        [prismaOperator]: castValue(rule.attribute, rule.value)
+                    }
+                };
+            }
+        })
+        .filter(Boolean); // remove nulls
 
-    return { [combinatorKey]: conditions };
+    return conditions.length ? { [combinatorKey]: conditions } : {};
 }
 
-module.exports = { buildPrismaFilter };
+

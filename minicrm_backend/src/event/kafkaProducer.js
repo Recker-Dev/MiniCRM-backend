@@ -1,7 +1,7 @@
-const { Kafka } = require("kafkajs");
+import { Kafka } from "kafkajs";
 
 const kafka = new Kafka({
-    clientId: 'customer-producer',
+    clientId: 'producer',
     brokers: ['localhost:9092']
 })
 
@@ -9,7 +9,7 @@ const kafka = new Kafka({
 const producer = kafka.producer();
 
 
-const connectProducer = async () => {
+export const connectProducer = async () => {
     try {
         await producer.connect();
         console.log('✅  Kafka producer connected successfully.');
@@ -19,7 +19,7 @@ const connectProducer = async () => {
 };
 
 
-const disconnectProducer = async () => {
+export const disconnectProducer = async () => {
     try {
         await producer.disconnect();
         console.log('Kafka producer disconnected.');
@@ -29,7 +29,7 @@ const disconnectProducer = async () => {
 };
 
 
-const sendMessage = async (topic, data) => {
+export const sendMessage = async (topic, data) => {
     try {
         await producer.send({
             topic: topic,
@@ -45,8 +45,3 @@ const sendMessage = async (topic, data) => {
 
 
 
-module.exports = {
-    connectProducer,
-    sendMessage,
-    disconnectProducer,
-};

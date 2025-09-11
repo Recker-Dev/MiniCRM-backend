@@ -1,10 +1,10 @@
-const { PrismaClient } = require("@prisma/client");
-const { createCustomerEntryValidationService } = require("../valServices/customerService")
-const { sendMessage } = require("../event/kafkaProducer")
-const { buildPrismaFilter } = require("../helper/helper");
+import { PrismaClient } from "@prisma/client";
+import { createCustomerEntryValidationService } from "../valServices/customerService.js";
+import { sendMessage } from "../event/kafkaProducer.js"
+import { buildPrismaFilter } from "../helper/helper.js";
 const prisma = new PrismaClient();
 
-exports.createCustomer = async (req, res) => {
+export async function createCustomer(req, res) {
     try {
         // Step 1: Validate customer data
         const validationMessage = await createCustomerEntryValidationService(req.body);
@@ -29,9 +29,9 @@ exports.createCustomer = async (req, res) => {
     } catch (err) {
         res.status(500).json({ message: `Internal server error,${err}` });
     }
-};
+}
 
-exports.getCustomers = async (req, res) => {
+export async function getCustomers(req, res) {
     try {
         let customers;
 
@@ -51,4 +51,4 @@ exports.getCustomers = async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
-};
+}

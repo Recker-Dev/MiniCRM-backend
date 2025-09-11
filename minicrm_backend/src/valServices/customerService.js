@@ -1,5 +1,5 @@
 // services/customerValidationService.js
-const { PrismaClient } = require("@prisma/client");
+import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 // Regex Validators
@@ -7,7 +7,7 @@ const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 // 10-digit number without a country code
 const isValidPhone = (phone) => /^\d{10}$/.test(phone);
 
-async function createCustomerEntryValidationService(customerData) {
+export async function createCustomerEntryValidationService(customerData) {
     const { name, email, phone } = customerData;
 
     // Base validation
@@ -46,6 +46,3 @@ async function createCustomerEntryValidationService(customerData) {
     return "Validation passed";
 }
 
-module.exports = {
-    createCustomerEntryValidationService,
-};

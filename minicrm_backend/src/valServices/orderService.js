@@ -1,9 +1,9 @@
-const { PrismaClient } = require("@prisma/client");
+import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const validStatuses = ["PENDING", "COMPLETED", "CANCELLED", "REFUNDED"];
 
-async function createOrderEntryValidation(orderData) {
+export async function createOrderEntryValidation(orderData) {
     const { id, customerId, amount, status, items } = orderData;
 
     if (!id || typeof id !== "string") {
@@ -68,6 +68,3 @@ async function createOrderEntryValidation(orderData) {
     return "Validation passed";
 }
 
-module.exports = {
-    createOrderEntryValidation
-};

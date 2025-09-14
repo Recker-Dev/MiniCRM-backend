@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "server": "node index.js",
+    "server": "node --env-file=.env index.js",
     "consumer": "node consumer.js"
   },
   "keywords": [],
@@ -13,6 +13,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@google/genai": "^1.19.0",
     "@prisma/client": "^6.15.0",
     "axios": "^1.11.0",
     "cors": "^2.8.5",

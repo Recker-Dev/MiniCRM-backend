@@ -2,11 +2,7 @@
 import express from "express";
 import cors from "cors";
 
-import customerRoutes from "./src/routes/customerRoutes.js";
-import orderRoutes from "./src/routes/orderRoutes.js";
-import communicationRoutes from './src/routes/communicationRoutes.js';
-import campaignRoutes from './src/routes/campaignRoutes.js';
-import deliveryRoutes from './src/routes/deliveryRoutes.js';
+import router from "./src/routes/routes.js";
 
 import { createTopics } from "./src/config/kafkaInit.js";
 import { connectProducer, disconnectProducer } from "./src/event/kafkaProducer.js";
@@ -17,11 +13,7 @@ app.use(cors());
 
 
 // Routes
-app.use("/customers", customerRoutes);
-app.use("/orders", orderRoutes);
-app.use("/communications", communicationRoutes);
-app.use("/campaigns", campaignRoutes);
-app.use("/receipts", deliveryRoutes);
+app.use("/api", router);
 
 const PORT = 3000;
 

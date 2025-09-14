@@ -3,7 +3,7 @@ import axios from "axios";
 // Vendor sends delivery receipts back to CRM
 async function deliveryApi(results) {
     try {
-        const response = await axios.post("http://localhost:3000/receipts", results, {
+        const response = await axios.post("http://localhost:3000/api/receipts", results, {
             headers: { "Content-Type": "application/json" }
         });
 
@@ -31,11 +31,11 @@ export async function vendorController(req, res) {
 
             if (success) {
                 console.log(
-                    `✅ [Vendor] Delivered to ${d.customer_name} (${d.email || d.phone}): "${d.personalized_msg}"`
+                    `✅ [Vendor] Delivered to ${d.name} (${d.email || d.phone}): "${d.personalized_msg}"`
                 );
             } else {
                 console.log(
-                    `❌ [Vendor] FAILED delivery to ${d.customer_name} (${d.email || d.phone})`
+                    `❌ [Vendor] FAILED delivery to ${d.name} (${d.email || d.phone})`
                 );
             }
             return {

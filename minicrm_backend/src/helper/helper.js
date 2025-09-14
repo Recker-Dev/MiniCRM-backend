@@ -13,15 +13,15 @@ function castValue(attribute, val) {
     if (['spend', 'visit', 'total_spend'].includes(attribute)) return Number(val);
 
     // date fields
-    if (['last_order_date', "createdAt"].includes(attribute)) {
+    if (['last_order_date', 'createdAt'].includes(attribute)) {
         const days = Number(val);
         const today = new Date();
         const targetDate = new Date();
         targetDate.setDate(today.getDate() - days);
-
-        // For '<' operator: last_order_date < targetDate (inactive more than X days)
+        targetDate.setHours(0, 0, 0, 0); // normalize
         return targetDate;
     }
+
 
     // boolean fields
     if (val === 'true' || val === 'false') return val === 'true';

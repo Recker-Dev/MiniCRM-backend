@@ -52,7 +52,9 @@ model Campaign {
   id                String              @id @default(uuid())
   name              String
   userId            String
+  intent            String
   segment           Json
+  summary           String?
   audience_size     Int
   message           String
   status            CampaignStatus      @default(RUNNING)
@@ -90,4 +92,14 @@ enum DeliveryStatus {
   PENDING
   SENT
   FAILED
+}
+
+model User {
+  id        String   @id @default(dbgenerated("concat('user_', replace(cast(gen_random_uuid() as text), '-', ''))"))
+  googleId  String?  @unique
+  email     String?  @unique
+  name      String?
+  avatar   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

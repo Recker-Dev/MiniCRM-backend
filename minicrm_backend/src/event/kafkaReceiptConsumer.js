@@ -1,5 +1,6 @@
 import { Kafka } from 'kafkajs';
 import { PrismaClient } from '@prisma/client';
+import { getCampaignSummary } from '../aiServices/aiService.js';
 const prisma = new PrismaClient();
 
 
@@ -17,38 +18,34 @@ const kafka = new Kafka({
 const consumer = kafka.consumer({ groupId: 'delivery-resolution-group' });
 
 const processBatch = async () => {
-
     const receipts = Array.from(batchBuffer.values());
     batchBuffer.clear();
 
     if (receipts.length === 0) return;
 
     try {
-        await prisma.$transaction(async (tx) => {
-            // 1. Atomic Update Communication_Log
+        // --- 0️⃣ Compute campaign stats outside the transaction ---
+        const campaignStats = receipts.reduce((acc, r) => {
+            if (!acc[r.campaignId]) acc[r.campaignId] = { sent: 0, failed: 0 };
+            if (r.status === "SENT") acc[r.campaignId].sent++;
+            else if (r.status === "FAILED") acc[r.campaignId].failed++;
+            return acc;
+        }, {});
+
+        // --- 1. Transaction: update communication logs + campaign counts ---
+        const updatedCampaigns = await prisma.$transaction(async (tx) => {
+            // Update communication logs
             await Promise.all(
-                receipts.map((r) =>
+                receipts.map(r =>
                     tx.communication_log.update({
                         where: { id: r.commId },
-                        data: {
-                            status: r.status,
-                            delivered_at: new Date(),
-                        },
-                    }))
+                        data: { status: r.status, delivered_at: new Date() },
+                    })
+                )
             );
 
-            // 2. Group by campaignId using reduce
-            const campaignStats = receipts.reduce((acc, r) => {
-                if (!acc[r.campaignId]) {
-                    acc[r.campaignId] = { sent: 0, failed: 0 };
-                }
-                if (r.status === "SENT") acc[r.campaignId].sent++;
-                else if (r.status === "FAILED") acc[r.campaignId].failed++;
-                return acc;
-            }, {});
-
-            // 3. Bulk update Campaign counter
-            const updates = await Promise.all(
+            // Update campaigns counts
+            const campaigns = await Promise.all(
                 Object.entries(campaignStats).map(([campaignId, stats]) =>
                     tx.campaign.update({
                         where: { id: campaignId },
@@ -61,23 +58,39 @@ const processBatch = async () => {
                 )
             );
 
-            // 4. Mark as completed when needed, atomic update
-            await Promise.all(
-                updates.filter((u) => u.pending_count <= 0)
-                    .map((u) =>
-                        tx.campaign.update({
-                            where: { id: u.id },
-                            data: {
-                                status: "COMPLETED",
-                            }
-                        }))
-            );
+            return campaigns.filter(c => c.pending_count <= 0); // completed campaigns
         });
+
+        // --- 2️⃣ Generate summaries outside the transaction ---
+        const summaries = await Promise.all(
+            updatedCampaigns.map(c =>
+                getCampaignSummary(
+                    c.name,
+                    c.intent,
+                    c.segment,
+                    c.audience_size,
+                    c.sent_count,
+                    c.failed_count
+                )
+            )
+        );
+
+        // --- 3️⃣ Update completed campaigns with summaries ---
+        await prisma.$transaction(
+            updatedCampaigns.map((c, index) =>
+                prisma.campaign.update({
+                    where: { id: c.id },
+                    data: { status: "COMPLETED", summary: summaries[index] },
+                })
+            )
+        );
+
         console.log(`✅ Processed batch of ${receipts.length} receipts`);
     } catch (err) {
         console.error("❌ Error processing batch:", err);
     }
 };
+
 
 export const runDeliveryConsumer = async () => {
     try {

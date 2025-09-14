@@ -41,7 +41,7 @@ export async function getCustomers(req, res) {
         } else {
             // apply rule engine
             const prismaFilter = buildPrismaFilter(req.body);
-            // console.log(prismaFilter);
+            console.log("Filter:", JSON.stringify(prismaFilter, null, 2));
             customers = await prisma.customer.findMany({
                 where: prismaFilter,
             });

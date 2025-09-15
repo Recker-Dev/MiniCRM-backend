@@ -13,6 +13,93 @@ The system is composed of the following services:
 
 ---
 
+
+# 🏗️ System Architecture
+
+The MiniCRM project follows a **microservices-driven event-based architecture**, where services communicate asynchronously using **Kafka** as the backbone.  
+
+---
+
+## 🔑 Core Components
+
+- **MiniCRM Backend (`minicrm_backend`)**
+  - Exposes all REST endpoints (Customers, Orders, Campaigns, Users, Logs, Receipts, AI).
+  - Only service directly integrated with **Kafka**.
+  - Responsible for campaign orchestration and async updates.
+
+- **Data Ingestion Faker (`data_injestion_faker`)**
+  - Simulates customer and order data streams.
+  - Publishes mock records to Kafka (`customer-topic`, `order-topic`).
+
+- **Vendor Backend (`vendor_faker`)**
+  - Emulates a third-party vendor delivering campaign communications.
+  - Randomizes `success` / `fail` outcomes (10% failure chance).
+  - Reports results back via **Receipts API**.
+
+- **PostgreSQL Database**
+  - Central data store for **Customers, Orders, Campaigns, Communication Logs, and Users**.
+  - Accessed through Prisma ORM.
+
+- **Kafka Topics**
+  - Backbone for inter-service async communication:
+    - `customer-topic` → Customer ingestion.
+    - `order-topic` → Order ingestion.
+    - `campaign-deliveries` → Campaign execution batches.
+    - `deliveries-receipt` → Vendor delivery outcomes.
+
+---
+
+## 📊 Data Flow
+
+### 1. Data Ingestion
+[Data Ingestion Faker] → (customer-topic / order-topic) → [MiniCRM Backend] → [Postgres DB]
+- Customers & orders are published into Kafka.  
+- Backend consumers persist data into Postgres.  
+
+---
+
+### 2. Campaign Trigger
+[Frontend] → (POST /campaigns) → [MiniCRM Backend]
+- Request body includes `ruleGroup` (segmentation criteria).  
+- Backend:
+  - Converts `ruleGroup` into Prisma `where` clause.  
+  - AI module generates campaign **intent**.  
+  - Shortlisted customers are published to `campaign-deliveries`.  
+  - Campaign record created in DB.  
+  - API response returns **campaign ticket**.  
+---
+
+### 3. Campaign Delivery
+[campaign-deliveries Topic] → [Vendor Backend] → External Vendor (simulated)
+- Vendor Faker consumes batches of campaign customers.  
+- For each message:
+  - Simulates delivery (`success` or `fail`).  
+  - Sends POST `/receipts` → MiniCRM Backend.  
+
+---
+
+### 4. Receipt Processing
+
+[Vendor Backend] → (POST /receipts) → [MiniCRM Backend] → (deliveries-receipt Topic)
+- Receipts are **quickly enqueued** into Kafka (`deliveries-receipt`).  
+- Async consumer processes them:
+  - Updates `Communication_log`.  
+  - Adjusts `sent_count` / `failed_count` in Campaign.  
+  - On last receipt → triggers **AI summarizer** to finalize campaign insights.  
+
+---
+
+## ⚡ Key Design Principles
+
+- **Async-first** → Kafka buffers ensure resilient, decoupled services.  
+- **Batch Processing** → Consumers process records in chunks for efficiency.  
+- **Fail-Safe Vendor Simulation** → Vendor failures are randomized for realism.  
+- **DB Consistency via Prisma** → All campaign & communication logs are updated transactionally.  
+- **AI Integration** → Provides campaign intent detection & summary generation.  
+
+---
+
+
 ## Setup Instructions
 
 To run the system, **4 terminals** are required.
@@ -182,3 +269,5 @@ model User {
 - All inter-service communication related to **customers**, **orders**, and **campaign execution** happens through Kafka topics.  
 - Consumers are designed for **batch processing** and **asynchronous updates**, ensuring high throughput.  
 - Use `consumer.js` in the backend to listen and process messages from the above topics.  
+
+

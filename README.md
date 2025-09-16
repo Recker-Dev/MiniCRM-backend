@@ -1,5 +1,5 @@
 # MiniCRM Prototype
-
+[View this repository on GitHub For Local Deployment Guide](https://github.com/Recker-Dev/MiniCRM-Deployment)
 ## Overview
 
 This repository contains the **technical prototype** of a lightweight CRM system built on a microservices architecture. It demonstrates **data ingestion**, **audience segmentation**, **campaign execution**, **Kafka-based asynchronous processing**, and **AI-assisted features**.  
